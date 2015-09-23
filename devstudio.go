@@ -9,6 +9,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 )
@@ -28,13 +29,14 @@ func baseUrl() (string, error) {
 	return baseUrl, nil
 }
 
-func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	baseUrl, _ := baseUrl()
+type DevStudioApiClient struct {
+	*http.Client
+	BaseUrl string
+}
+
+func NewClient() *DevStudioApiClient {
 	// Shout out to https://www.snip2code.com/Snippet/551369/Example-usage-of-https---godoc-org-golan
+	baseUrl, _ := baseUrl()
 	clientID, _ := clientID()
 	clientSecret, _ := clientSecret()
 	config := clientcredentials.Config{
@@ -42,22 +44,13 @@ func main() {
 		ClientSecret: clientSecret,
 		TokenURL:     baseUrl + "/v1/auth/token",
 	}
-	client := config.Client(context.Background())
-
 	// the client will update its token if it's expired
-	flightSearchUrl := baseUrl + "/v1/shop/flights"
-	params := url.Values{}
-	params.Add("origin", "DFW")
-	params.Add("destination", "NYC")
-	params.Add("departuredate", "2015-10-01")
-	params.Add("returndate", "2015-10-04")
-	params.Add("limit", "500")
-	params.Add("outboundflightstops", "2")
-	params.Add("inboundflightstops", "2")
-	params.Add("excludedcarriers", "NK")
-	flightSearchUrl = flightSearchUrl + "?" + params.Encode()
-	fmt.Printf("+%v\n", flightSearchUrl)
-	resp, err := client.Get(flightSearchUrl)
+	client := config.Client(context.Background())
+	return &DevStudioApiClient{Client: client, BaseUrl: baseUrl}
+}
+func (c *DevStudioApiClient) Request(requestUrl string) {
+	fmt.Printf("+%v\n", requestUrl)
+	resp, err := c.Get(requestUrl)
 	defer resp.Body.Close()
 	if err != nil {
 		panic(err)
@@ -68,4 +61,40 @@ func main() {
 	_ = json.Unmarshal(content, &f)
 	prettyJSON, _ := json.MarshalIndent(f, "", "  ")
 	os.Stdout.Write(prettyJSON)
+}
+func (c *DevStudioApiClient) RequestWithParams(requestUrl string, params map[string]string) {
+	q := url.Values{}
+	for key, value := range params {
+		q.Add(key, value)
+	}
+	requestUrl = requestUrl + "?" + q.Encode()
+	c.Request(requestUrl)
+}
+func (c *DevStudioApiClient) GetTravelThemes() {
+	travelThemesUrl := c.BaseUrl + "/v1/lists/supported/shop/themes"
+	c.Request(travelThemesUrl)
+}
+func (c *DevStudioApiClient) GetFlightSearch() {
+	flightSearchUrl := c.BaseUrl + "/v1/shop/flights"
+	params := map[string]string{
+		"origin":              "DFW",
+		"destination":         "NYC",
+		"departuredate":       "2015-10-01",
+		"returndate":          "2015-10-04",
+		"limit":               "1",
+		"outboundflightstops": "2",
+		"inboundflightstops":  "2",
+		"excludecarriers":     "NK",
+	}
+	c.RequestWithParams(flightSearchUrl, params)
+}
+
+func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	client := NewClient()
+	//client.GetTravelThemes()
+	client.GetFlightSearch()
 }
