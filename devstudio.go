@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/joho/godotenv"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/clientcredentials"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 )
 
@@ -21,9 +23,9 @@ func clientSecret() (string, error) {
 	clientSecret = base64.StdEncoding.EncodeToString([]byte(clientSecret))
 	return clientSecret, nil
 }
-func url() (string, error) {
-	url := os.Getenv("URL")
-	return url, nil
+func baseUrl() (string, error) {
+	baseUrl := os.Getenv("URL")
+	return baseUrl, nil
 }
 
 func main() {
@@ -31,21 +33,31 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	url, _ := url()
+	baseUrl, _ := baseUrl()
 	// Shout out to https://www.snip2code.com/Snippet/551369/Example-usage-of-https---godoc-org-golan
 	clientID, _ := clientID()
 	clientSecret, _ := clientSecret()
 	config := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		TokenURL:     url + "/v1/auth/token",
+		TokenURL:     baseUrl + "/v1/auth/token",
 	}
-	// you can modify the client (for example ignoring bad certs or otherwise)
-	// by modifying the context
 	client := config.Client(context.Background())
 
 	// the client will update its token if it's expired
-	resp, err := client.Get(url + "/v1/lists/supported/shop/themes")
+	flightSearchUrl := baseUrl + "/v1/shop/flights"
+	params := url.Values{}
+	params.Add("origin", "DFW")
+	params.Add("destination", "NYC")
+	params.Add("departuredate", "2015-10-01")
+	params.Add("returndate", "2015-10-04")
+	params.Add("limit", "500")
+	params.Add("outboundflightstops", "2")
+	params.Add("inboundflightstops", "2")
+	params.Add("excludedcarriers", "NK")
+	flightSearchUrl = flightSearchUrl + "?" + params.Encode()
+	fmt.Printf("+%v\n", flightSearchUrl)
+	resp, err := client.Get(flightSearchUrl)
 	defer resp.Body.Close()
 	if err != nil {
 		panic(err)
