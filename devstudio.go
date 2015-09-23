@@ -14,6 +14,27 @@ import (
 	"os"
 )
 
+type DevStudioApiClient struct {
+	*http.Client
+	BaseUrl string
+}
+
+type Link struct {
+	LinkURL string `json:"href"`
+	Rel     string `json:"rel"`
+}
+type Links struct {
+	Links []Link
+}
+type Theme struct {
+	Links
+	Theme string
+}
+type Themes struct {
+	Links
+	Themes []Theme
+}
+
 func clientID() (string, error) {
 	clientID := os.Getenv("CLIENT_ID")
 	clientID = base64.StdEncoding.EncodeToString([]byte(clientID))
@@ -27,11 +48,6 @@ func clientSecret() (string, error) {
 func baseUrl() (string, error) {
 	baseUrl := os.Getenv("URL")
 	return baseUrl, nil
-}
-
-type DevStudioApiClient struct {
-	*http.Client
-	BaseUrl string
 }
 
 func NewClient() *DevStudioApiClient {
@@ -48,7 +64,7 @@ func NewClient() *DevStudioApiClient {
 	client := config.Client(context.Background())
 	return &DevStudioApiClient{Client: client, BaseUrl: baseUrl}
 }
-func (c *DevStudioApiClient) Request(requestUrl string) {
+func (c *DevStudioApiClient) Request(requestUrl string) []byte {
 	fmt.Printf("+%v\n", requestUrl)
 	resp, err := c.Get(requestUrl)
 	defer resp.Body.Close()
@@ -57,22 +73,30 @@ func (c *DevStudioApiClient) Request(requestUrl string) {
 	}
 	// do something with resp
 	content, _ := ioutil.ReadAll(resp.Body)
-	var f interface{}
-	_ = json.Unmarshal(content, &f)
-	prettyJSON, _ := json.MarshalIndent(f, "", "  ")
-	os.Stdout.Write(prettyJSON)
+	return content
 }
-func (c *DevStudioApiClient) RequestWithParams(requestUrl string, params map[string]string) {
+func (c *DevStudioApiClient) RequestWithParams(requestUrl string, params map[string]string) []byte {
 	q := url.Values{}
 	for key, value := range params {
 		q.Add(key, value)
 	}
 	requestUrl = requestUrl + "?" + q.Encode()
-	c.Request(requestUrl)
+	return c.Request(requestUrl)
 }
+func prettyPrintJson(content []byte) {
+	var f interface{}
+	_ = json.Unmarshal(content, &f)
+	prettyJSON, _ := json.MarshalIndent(f, "", "  ")
+	os.Stdout.Write(prettyJSON)
+}
+
 func (c *DevStudioApiClient) GetTravelThemes() {
 	travelThemesUrl := c.BaseUrl + "/v1/lists/supported/shop/themes"
-	c.Request(travelThemesUrl)
+	content := c.Request(travelThemesUrl)
+	//prettyPrintJson(content)
+	var themes Themes
+	json.Unmarshal(content, &themes)
+	fmt.Printf("+%v\n", themes)
 }
 func (c *DevStudioApiClient) GetFlightSearch() {
 	flightSearchUrl := c.BaseUrl + "/v1/shop/flights"
@@ -86,7 +110,8 @@ func (c *DevStudioApiClient) GetFlightSearch() {
 		"inboundflightstops":  "2",
 		"excludecarriers":     "NK",
 	}
-	c.RequestWithParams(flightSearchUrl, params)
+	content := c.RequestWithParams(flightSearchUrl, params)
+	prettyPrintJson(content)
 }
 
 func main() {
@@ -95,6 +120,6 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	client := NewClient()
-	//client.GetTravelThemes()
-	client.GetFlightSearch()
+	client.GetTravelThemes()
+	//client.GetFlightSearch()
 }
