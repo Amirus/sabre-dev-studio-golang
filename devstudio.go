@@ -19,20 +19,18 @@ type DevStudioApiClient struct {
 	BaseUrl string
 }
 
-type Link struct {
-	LinkURL string `json:"href"`
-	Rel     string `json:"rel"`
-}
 type Links struct {
-	Links []Link
-}
-type Theme struct {
-	Links
-	Theme string
+	Links []struct {
+		LinkURL string `json:"href"`
+		Rel     string `json:"rel"`
+	}
 }
 type Themes struct {
 	Links
-	Themes []Theme
+	Themes []struct {
+		Links
+		Theme string
+	}
 }
 
 func clientID() (string, error) {
