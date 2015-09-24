@@ -10,8 +10,27 @@ This project relies on a `.env` file to load secret data.  It should look like t
 
 And then you can install the go dependencies:
 
-    go get golang.org/x/oauth2
-    go get github.com/joho/godotenv
+    go get github.com/SabreDevStudio/sabre-dev-studio-golang
+
+Create your program, which could look something like this:
+
+    package main
+    
+    import (
+            devstudio "github.com/SabreDevStudio/sabre-dev-studio-golang"
+            "github.com/joho/godotenv"
+            "log"
+    )
+    
+    func main() {
+            err := godotenv.Load()
+            if err != nil {
+                    log.Fatal("Error loading .env file")
+            }
+            client := devstudio.NewClient()
+            client.GetTravelThemes()
+            //client.GetFlightSearch()
+    }
 
 And then you can run the program:
 
