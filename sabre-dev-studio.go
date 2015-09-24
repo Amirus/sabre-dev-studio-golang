@@ -1,14 +1,12 @@
-package main
+package sabredevstudio
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/joho/godotenv"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/clientcredentials"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -232,14 +230,4 @@ func (c *DevStudioApiClient) GetFlightSearch() {
 	var flightShop FlightShop
 	json.Unmarshal(content, &flightShop)
 	fmt.Printf("+%v\n", flightShop)
-}
-
-func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	client := NewClient()
-	//client.GetTravelThemes()
-	client.GetFlightSearch()
 }
