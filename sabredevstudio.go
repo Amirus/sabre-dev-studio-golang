@@ -205,19 +205,25 @@ func prettyPrintJson(content []byte) {
 	os.Stdout.Write(prettyJSON)
 }
 
-func (c *DevStudioApiClient) GetTravelThemes() {
+func (c *DevStudioApiClient) GetTravelThemes() (*Themes, error) {
 	travelThemesUrl := c.BaseUrl + "/v1/lists/supported/shop/themes"
 	content := c.Request(travelThemesUrl)
 	//prettyPrintJson(content)
 	var themes Themes
-	json.Unmarshal(content, &themes)
-	fmt.Printf("+%v\n", themes)
+	if err := json.Unmarshal(content, &themes); err != nil {
+		return nil, err
+	}
+	//fmt.Printf("+%v\n", themes)
+	return &themes, nil
 }
-func (c *DevStudioApiClient) GetFlightSearch(params map[string]string) {
+func (c *DevStudioApiClient) GetFlightSearch(params map[string]string) (*FlightShop, error) {
 	flightSearchUrl := c.BaseUrl + "/v1/shop/flights"
 	content := c.RequestWithParams(flightSearchUrl, params)
 	//prettyPrintJson(content)
 	var flightShop FlightShop
-	json.Unmarshal(content, &flightShop)
-	fmt.Printf("+%v\n", flightShop)
+	if err := json.Unmarshal(content, &flightShop); err != nil {
+		return nil, err
+	}
+	//fmt.Printf("+%v\n", flightShop)
+	return &flightShop, nil
 }
