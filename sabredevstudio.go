@@ -32,7 +32,7 @@ type Themes struct {
 	}
 }
 type Currency struct {
-	AmountRaw     interface{} `json:"Amount,omitempty"` // Not always float64 in the data
+	AmountRaw     interface{} `json:"Amount"` // Not always float64 in the data
 	Amount        float64     `json:",omitempty"`
 	CurrencyCode  string
 	DecimalPlaces int
@@ -213,18 +213,8 @@ func (c *DevStudioApiClient) GetTravelThemes() {
 	json.Unmarshal(content, &themes)
 	fmt.Printf("+%v\n", themes)
 }
-func (c *DevStudioApiClient) GetFlightSearch() {
+func (c *DevStudioApiClient) GetFlightSearch(params map[string]string) {
 	flightSearchUrl := c.BaseUrl + "/v1/shop/flights"
-	params := map[string]string{
-		"origin":              "DFW",
-		"destination":         "NYC",
-		"departuredate":       "2015-10-01",
-		"returndate":          "2015-10-04",
-		"limit":               "1",
-		"outboundflightstops": "2",
-		"inboundflightstops":  "2",
-		"excludecarriers":     "NK",
-	}
 	content := c.RequestWithParams(flightSearchUrl, params)
 	//prettyPrintJson(content)
 	var flightShop FlightShop

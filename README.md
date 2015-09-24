@@ -28,7 +28,6 @@ Create your program, which could look something like this:
             }
             client := devstudio.NewClient()
             client.GetTravelThemes()
-            //client.GetFlightSearch()
     }
 
 And then you can run the program:
