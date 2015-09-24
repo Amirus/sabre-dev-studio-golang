@@ -32,6 +32,106 @@ type Themes struct {
 		Theme string
 	}
 }
+type Currency struct {
+	Amount        interface{} // Not always float64 in the data
+	CurrencyCode  string
+	DecimalPlaces int
+	TaxCode       string
+}
+type FlightShop struct {
+	DepartureDateTime   string // Just the date
+	ReturnDateTime      string // Just the date
+	DestinationLocation string
+	OriginLocation      string
+	PricedItineraries   []struct {
+		AirItinerary struct {
+			DirectionInd             string
+			OriginDestinationOptions struct {
+				OriginDestinationOption []struct {
+					ElapsedTime   int
+					FlightSegment []struct {
+						ArrivalAirport    struct{ LocationCode string }
+						ArrivalDateTime   string // This one is the full timestamp
+						ArrivalTimeZone   struct{ GMTOffset int }
+						DepartureAirport  struct{ LocationCode string }
+						DepartureDateTime string // This one is the full timestamp
+						DepartureTimeZone struct{ GMTOffset int }
+						ElapsedTime       int
+						Equipment         struct{ AirEquipType int }
+						FlightNumber      int
+						MarketingAirline  struct{ Code string }
+						MarriageGrp       string
+						OnTimePerformance struct{ Level int }
+						OperatingAirline  struct {
+							FlightNumber int
+							Code         string
+						}
+						ResBookDesignCode string
+						StopQuantity      int
+						TPA_Extensions    struct {
+							eTicket struct{ Ind bool }
+						}
+					}
+				}
+			}
+		}
+		AirItineraryPricingInfo struct {
+			AlternateCityOption bool
+			FareInfos           struct {
+				FareInfo []struct {
+					FareReference  string
+					TPA_Extensions struct {
+						Cabin          struct{ Cabin string }
+						SeatsRemaining struct {
+							BelowMin bool
+							Number   int
+						}
+					}
+				}
+			}
+			ItinTotalFare struct {
+				BaseFare         Currency
+				EquivFare        Currency
+				FareConstruction Currency
+				Taxes            struct{ Tax []Currency }
+				TotalFare        Currency
+			}
+			PTC_FareBreakdowns struct {
+				PTC_FareBreakdown struct {
+					FareBasisCodes struct {
+						FareBasisCode []struct {
+							ArrivalAirportCode   string
+							AvailabilityBreak    bool
+							BookingCode          string
+							DepartureAirportCode string
+							content              string
+						}
+					}
+					PassengerFare struct {
+						BaseFare         Currency
+						EquivFare        Currency
+						FareConstruction Currency
+						TotalFare        Currency
+					}
+					PassengerTypeQuantity struct {
+						Quantity int
+						Code     string
+					}
+				}
+				TPA_Extensions struct {
+					DivideInParty struct{ Indicator bool }
+				}
+			}
+		}
+		AlternateAirport bool
+		SequenceNumber   int
+		TPA_Extensions   struct {
+			ValidatingCarrier struct{ Code string }
+		}
+		TicketingInfo struct{ TicketType string }
+	}
+	Links
+}
 
 func clientID() (string, error) {
 	clientID := os.Getenv("CLIENT_ID")
@@ -69,7 +169,6 @@ func (c *DevStudioApiClient) Request(requestUrl string) []byte {
 	if err != nil {
 		panic(err)
 	}
-	// do something with resp
 	content, _ := ioutil.ReadAll(resp.Body)
 	return content
 }
@@ -109,7 +208,10 @@ func (c *DevStudioApiClient) GetFlightSearch() {
 		"excludecarriers":     "NK",
 	}
 	content := c.RequestWithParams(flightSearchUrl, params)
-	prettyPrintJson(content)
+	//prettyPrintJson(content)
+	var flightShop FlightShop
+	json.Unmarshal(content, &flightShop)
+	fmt.Printf("+%v\n", flightShop)
 }
 
 func main() {
@@ -118,6 +220,6 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	client := NewClient()
-	client.GetTravelThemes()
-	//client.GetFlightSearch()
+	//client.GetTravelThemes()
+	client.GetFlightSearch()
 }
