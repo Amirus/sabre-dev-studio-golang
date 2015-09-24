@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 )
 
 type DevStudioApiClient struct {
@@ -33,11 +34,30 @@ type Themes struct {
 	}
 }
 type Currency struct {
-	Amount        interface{} // Not always float64 in the data
+	AmountRaw     interface{} `json:"Amount,omitempty"` // Not always float64 in the data
+	Amount        float64     `json:",omitempty"`
 	CurrencyCode  string
 	DecimalPlaces int
-	TaxCode       string
+	TaxCode       string `json:",omitempty"` // only applicable to taxes
 }
+
+// avoid recursion for the type cleansing dance below
+type currency Currency
+
+func (c *Currency) UnmarshalJSON(value []byte) error {
+	var cleanedCurrency currency
+	if err := json.Unmarshal(value, &cleanedCurrency); err != nil {
+		panic(err)
+	}
+	if str, ok := cleanedCurrency.AmountRaw.(string); ok {
+		cleanedCurrency.Amount, _ = strconv.ParseFloat(str, 64)
+	} else if flt, ok := cleanedCurrency.AmountRaw.(float64); ok {
+		cleanedCurrency.Amount = flt
+	}
+	*c = Currency{cleanedCurrency.AmountRaw, cleanedCurrency.Amount, cleanedCurrency.CurrencyCode, cleanedCurrency.DecimalPlaces, cleanedCurrency.TaxCode}
+	return nil
+}
+
 type FlightShop struct {
 	DepartureDateTime   string // Just the date
 	ReturnDateTime      string // Just the date
