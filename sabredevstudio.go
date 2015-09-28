@@ -56,6 +56,50 @@ func (c *Currency) UnmarshalJSON(value []byte) error {
 	return nil
 }
 
+type Equipment struct {
+	AirEquipTypeRaw interface{} `json:"AirEquipType"`
+	AirEquipType    string
+}
+
+// avoid recursion
+type equipment Equipment
+
+func (e *Equipment) UnmarshalJSON(value []byte) error {
+	var cleanedEquipment equipment
+	if err := json.Unmarshal(value, &cleanedEquipment); err != nil {
+		panic(err)
+	}
+	if str, ok := cleanedEquipment.AirEquipTypeRaw.(string); ok {
+		cleanedEquipment.AirEquipType = str
+	} else if i, ok := cleanedEquipment.AirEquipTypeRaw.(int); ok {
+		cleanedEquipment.AirEquipType = strconv.Itoa(i)
+	}
+	*e = Equipment{cleanedEquipment.AirEquipTypeRaw, cleanedEquipment.AirEquipType}
+	return nil
+}
+
+type OnTimePerformance struct {
+	LevelRaw interface{} `json:"Level"`
+	Level    string
+}
+
+// avoid recursion
+type ontimeperformance OnTimePerformance
+
+func (o *OnTimePerformance) UnmarshalJSON(value []byte) error {
+	var cleaned ontimeperformance
+	if err := json.Unmarshal(value, &cleaned); err != nil {
+		panic(err)
+	}
+	if str, ok := cleaned.LevelRaw.(string); ok {
+		cleaned.Level = str
+	} else if i, ok := cleaned.LevelRaw.(int); ok {
+		cleaned.Level = strconv.Itoa(i)
+	}
+	*o = OnTimePerformance{cleaned.LevelRaw, cleaned.Level}
+	return nil
+}
+
 type FlightShop struct {
 	DepartureDateTime   string // Just the date
 	ReturnDateTime      string // Just the date
@@ -75,11 +119,11 @@ type FlightShop struct {
 						DepartureDateTime string // This one is the full timestamp
 						DepartureTimeZone struct{ GMTOffset int }
 						ElapsedTime       int
-						Equipment         struct{ AirEquipType int }
+						Equipment         Equipment
 						FlightNumber      int
 						MarketingAirline  struct{ Code string }
 						MarriageGrp       string
-						OnTimePerformance struct{ Level int }
+						OnTimePerformance OnTimePerformance
 						OperatingAirline  struct {
 							FlightNumber int
 							Code         string
