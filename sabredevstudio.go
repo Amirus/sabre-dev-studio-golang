@@ -3,7 +3,7 @@ package sabredevstudio
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	//"fmt"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/clientcredentials"
 	"io/ioutil"
@@ -225,7 +225,7 @@ func NewClient() *DevStudioApiClient {
 	return &DevStudioApiClient{Client: client, BaseUrl: baseUrl}
 }
 func (c *DevStudioApiClient) Request(requestUrl string) []byte {
-	fmt.Printf("+%v\n", requestUrl)
+	//fmt.Printf("%v\n", requestUrl)
 	resp, err := c.Get(requestUrl)
 	defer resp.Body.Close()
 	if err != nil {
