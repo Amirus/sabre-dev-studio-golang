@@ -11,7 +11,26 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 )
+
+func MakeTimeStamp(dt string, offset int) time.Time {
+	sign := "+"
+	if offset < 0 {
+		sign = "-"
+		offset = offset * -1
+	}
+	pad := ""
+	if offset < 10 {
+		pad = "0"
+	}
+	rfc3339 := dt + sign + pad + strconv.Itoa(offset) + ":00"
+	d, err := time.Parse(time.RFC3339, rfc3339)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
 
 type DevStudioApiClient struct {
 	*http.Client
